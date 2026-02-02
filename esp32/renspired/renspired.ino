@@ -27,7 +27,7 @@
   "You are a helpful assistant running on a TI-Nspire calculator."             \
   "You can think as much as you need, but keep responses relatively concise."  \
   "Avoid text formatting like Markdown and LaTeX that won't be able to be "    \
-  "remdered - ASCII only."
+  "rendered - ASCII only."
 
 // Uncomment to use a local LLM (openai compatible) instead of Gemini
 // #define USE_LOCAL_LLM
