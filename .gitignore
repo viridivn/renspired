@@ -1,0 +1,22 @@
+# Object files
+*.o
+
+# Nspire build artifacts
+*.elf
+*.tns
+*.zehn
+
+# Arduino / ESP32 build artifacts
+build/
+.arduino/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor / IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
