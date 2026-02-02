@@ -1,4 +1,6 @@
 # Renspired
+<img src="https://github.com/user-attachments/assets/1153a938-a6e2-4621-a894-25f63113bd71" width="512">
+
 Renspired is software that allows the TI-Nspire CX II (CAS) to access LLMs (Gemini or OpenAI-compatible) via an ESP32 board connected to the Nspire's docking connector UART. The ESP32 connects to a WiFi AP and calls the Gemini or an OpenAI-compatible LLM api.
 
 This software is a proof of concept hobby project, and is not intended to be used for academic dishonesty. The creator of this project does not condone academic dishonesty and will not field questions assisting with it.
