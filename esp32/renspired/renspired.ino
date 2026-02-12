@@ -79,14 +79,13 @@ void setup() {
   NspireUART.begin(BAUD_RATE, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
   NspireUART.setRxBufferSize(4096);
 
-  Serial.printf("Connecting to wireless: %s\n", WIFI_SSID);
+  Serial.printf("Connecting to wireless: %s", WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 30) {
-    delay(500);
+  unsigned long wifiStart = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 10000) {
+    delay(100);
     Serial.print(".");
-    attempts++;
   }
 
   if (WiFi.status() == WL_CONNECTED) {
@@ -105,8 +104,8 @@ void setup() {
   memset(requestBuffer, 0, sizeof(requestBuffer));
   lastActivityTime = millis();
 
+  // Allow modem to sleep when inactive, might be default, not sure
   WiFi.setSleep(true);
-  Serial.println("WiFi modem sleeping");
 
   Serial.println("Ready. Wait for handshake...");
 }
@@ -277,13 +276,23 @@ void sendApiRequest(const char *requestJson) {
   const char *currentPrompt = reqDoc["current_prompt"];
   JsonArray history = reqDoc["history"];
 
-  // Connect to API
+  // Connect to API (retry up to 3 times)
+  bool connected = false;
+  for (int attempt = 0; attempt < 3; attempt++) {
 #ifdef USE_LOCAL_LLM
-  if (!client.connect(LOCAL_LLM_HOST, LOCAL_LLM_PORT)) {
+    if (client.connect(LOCAL_LLM_HOST, LOCAL_LLM_PORT)) {
 #else
-  if (!client.connect("generativelanguage.googleapis.com", 443)) {
+    if (client.connect("generativelanguage.googleapis.com", 443)) {
 #endif
-    Serial.println("Connection failed");
+      connected = true;
+      break;
+    }
+    Serial.printf("Connection attempt %d failed, retrying...\n", attempt + 1);
+    client.stop();
+    delay(500);
+  }
+  if (!connected) {
+    Serial.println("Connection failed after 3 attempts");
     NspireUART.print("ERR:NET\n");
     NspireUART.write(EOT_CHAR);
     return;
@@ -374,7 +383,7 @@ void sendApiRequest(const char *requestJson) {
   bool sentStatus = false;
   bool isError = false;
   int lineCount = 0;
-  String firstLines = ""; // Buffer first few lines to check for errors
+  String firstLines = "";
 
   unsigned long timeout = millis() + 60000;
 
@@ -515,7 +524,6 @@ void sendApiRequest(const char *requestJson) {
     Serial.printf("Packet sent: %d/%d\n", sent, g_responseLen);
   }
 
-  // Send EOT
   NspireUART.write(EOT_CHAR);
   NspireUART.flush();
 
@@ -549,25 +557,23 @@ void enterLightSleep() {
     NspireUART.read();
   }
 
-  // Wait for WiFi to wake from modem sleep and reconnect if needed
-  Serial.print("Waiting for WiFi...");
+  // Force full WiFi reconnect after sleep.
+  // WiFi.status() can report WL_CONNECTED from cached state even after the AP
+  // has deauthenticated us during a longer sleep.
+  Serial.print("Reconnecting WiFi...");
+  WiFi.disconnect(false);
+  delay(100);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   unsigned long wifiStart = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 5000) {
+  while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 10000) {
     delay(100);
     Serial.print(".");
   }
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println(" OK");
-  } else {
-    Serial.println(" Reconnecting...");
-    WiFi.reconnect();
-    wifiStart = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 10000) {
-      delay(100);
-    }
-    Serial.printf("WiFi %s\n",
-                  WiFi.status() == WL_CONNECTED ? "reconnected" : "failed");
-  }
+  Serial.printf(" %s\n", WiFi.status() == WL_CONNECTED ? "OK" : "FAILED");
+  WiFi.setSleep(true);
+
+  // Force-close any stale TLS session from before sleep
+  client.stop();
 
   NspireUART.print("AWAKE\n");
   NspireUART.flush();

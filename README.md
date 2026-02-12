@@ -11,6 +11,6 @@ Disassembling the Nspire is arduous. There are 4 Torx T6 screws on the back, wit
 
 Once all the screws are removed, the back case can be removed from the calculator and the ESP32 can be soldered. Use a fine tipped iron, ensure you have no shorts, and cover the ESP32 in Kapton to prevent it from shorting. Reassemble the unit.
 
-Use the Arduino IDE to flash the ESP32. You will need the ArduinoJSON library. Remember edit the sketch to include your configuration details, such as WiFi information and API keys. The Nspire program requires [Ndless](https://ndless.me/) to be installed on the calculator, and requires the [Ndless SDK](https://hackspire.org/index.php/C_and_assembly_development_introduction) to build. Prebuilt binaries will not be provided to discourage cheating, and I suggest you do the same.
+Use the Arduino IDE to flash the ESP32. You will need the ArduinoJSON library. Remember edit the sketch to include your configuration details, such as WiFi information and API keys. Ensure "USB CDC On Boot" under the "Tools" dropdown is enabled or you won't be able to see the ESP32 USB serial output. The Nspire program requires [Ndless](https://ndless.me/) to be installed on the calculator, and requires the [Ndless SDK](https://hackspire.org/index.php/C_and_assembly_development_introduction) to build. Prebuilt binaries will not be provided to discourage cheating, and I suggest you do the same.
 
 This software is licensed under GNU AGPLv3. More information can be found in the LICENSE file.
